@@ -1,0 +1,243 @@
+{
+  "name": "Harbor Intake",
+  "firstMessage": "Hi, thanks for calling Harbor Intake. I will register you, it only takes a few minutes. What is your first and last name?",
+  "serverUrl": "https://REPLACE_WITH_PUBLIC_URL/voice/vapi",
+  "endCallMessage": "Thanks for calling Harbor Intake. Take care.",
+  "silenceTimeoutSeconds": 30,
+  "maxDurationSeconds": 900,
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the intake coordinator at Harbor Intake, a small clinic front desk.\nYou are on a live phone call. Speak the way a calm person at a desk would:\nshort sentences, contractions, no menu numbers, no \"press 1\".\n\nGoal: register a new patient, or update one we already have, then offer one\nfirst appointment. This is a demo. Do not ask for a Social Security number,\ninsurance card photo, or diagnosis.\n\nRequired, in roughly this order, but accept anything the caller volunteers early:\nfirst name, last name, date of birth, sex (Male, Female, Other, or Decline to\nAnswer), 10-digit U.S. phone, street address, city, state, ZIP.\n\nAfter the required fields, offer once: \"I can also take insurance, a member id,\nemail, apartment, emergency contact, or preferred language. Want to add any?\"\nIf they decline, move on. Do not ask for each optional field one by one unless\nthey start giving them.\n\nBefore any save, read every collected field back and ask if it is right.\nIf they correct you, change only that field and read it back again.\nCall create_patient or update_patient only after they agree.\nIf a tool returns an error, apologize in one sentence and ask only for the\nfield that failed. Do not say the record was saved.\n\nIf lookup_patient finds a record for the phone number, say:\n\"It looks like we already have a record for [first] [last]. Want me to update\nit instead?\" Update only if they agree.\n\nIf they say they want to start over, drop what you collected and begin again.\nIf they say \"hablo espa\u00f1ol\" or ask for Spanish, continue the rest of the call\nin Spanish. Switch back if they ask for English.\n\nAfter a successful save, say \"You're all set, [first name].\" Then offer the\nfirst two open appointment times from list_appointment_slots. Book only if\nthey pick one. If they don't want a visit, say goodbye and end the call.\n\nIf a tool fails or the call is breaking up, say so. Never fill silence with\na made-up confirmation."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "lookup_patient",
+          "description": "Look up an active patient by phone before creating a second record.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "phone_number": {
+                "type": "string",
+                "description": "10-digit US number"
+              }
+            },
+            "required": [
+              "phone_number"
+            ]
+          }
+        },
+        "server": {
+          "url": "https://REPLACE_WITH_PUBLIC_URL/voice/vapi"
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "create_patient",
+          "description": "Save a new patient only after the caller confirms the read-back. Returns an error string if a field is invalid.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "first_name": {
+                "type": "string"
+              },
+              "last_name": {
+                "type": "string"
+              },
+              "date_of_birth": {
+                "type": "string",
+                "description": "MM/DD/YYYY"
+              },
+              "sex": {
+                "type": "string",
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other",
+                  "Decline to Answer"
+                ]
+              },
+              "phone_number": {
+                "type": "string",
+                "description": "10-digit US number"
+              },
+              "email": {
+                "type": "string"
+              },
+              "address_line_1": {
+                "type": "string"
+              },
+              "address_line_2": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string",
+                "description": "2-letter US abbreviation or full name"
+              },
+              "zip_code": {
+                "type": "string"
+              },
+              "insurance_provider": {
+                "type": "string"
+              },
+              "insurance_member_id": {
+                "type": "string"
+              },
+              "preferred_language": {
+                "type": "string"
+              },
+              "emergency_contact_name": {
+                "type": "string"
+              },
+              "emergency_contact_phone": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "first_name",
+              "last_name",
+              "date_of_birth",
+              "sex",
+              "phone_number",
+              "address_line_1",
+              "city",
+              "state",
+              "zip_code"
+            ]
+          }
+        },
+        "server": {
+          "url": "https://REPLACE_WITH_PUBLIC_URL/voice/vapi"
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "update_patient",
+          "description": "Update an existing patient after they agree. Send patient_id and only the fields that changed.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "patient_id": {
+                "type": "string"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "last_name": {
+                "type": "string"
+              },
+              "date_of_birth": {
+                "type": "string",
+                "description": "MM/DD/YYYY"
+              },
+              "sex": {
+                "type": "string",
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other",
+                  "Decline to Answer"
+                ]
+              },
+              "phone_number": {
+                "type": "string",
+                "description": "10-digit US number"
+              },
+              "email": {
+                "type": "string"
+              },
+              "address_line_1": {
+                "type": "string"
+              },
+              "address_line_2": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string",
+                "description": "2-letter US abbreviation or full name"
+              },
+              "zip_code": {
+                "type": "string"
+              },
+              "insurance_provider": {
+                "type": "string"
+              },
+              "insurance_member_id": {
+                "type": "string"
+              },
+              "preferred_language": {
+                "type": "string"
+              },
+              "emergency_contact_name": {
+                "type": "string"
+              },
+              "emergency_contact_phone": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "patient_id"
+            ]
+          }
+        },
+        "server": {
+          "url": "https://REPLACE_WITH_PUBLIC_URL/voice/vapi"
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "list_appointment_slots",
+          "description": "List the next open demo visit times.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          }
+        },
+        "server": {
+          "url": "https://REPLACE_WITH_PUBLIC_URL/voice/vapi"
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "book_appointment",
+          "description": "Book one open slot for a saved patient.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "patient_id": {
+                "type": "string"
+              },
+              "slot_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "patient_id",
+              "slot_id"
+            ]
+          }
+        },
+        "server": {
+          "url": "https://REPLACE_WITH_PUBLIC_URL/voice/vapi"
+        }
+      }
+    ]
+  }
+}

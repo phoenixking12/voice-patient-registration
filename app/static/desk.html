@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harbor Intake — call desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=Outfit:wght@400;520&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="top">
+    <p class="mark">Harbor <span>Intake</span></p>
+    <nav class="nav">
+      <a class="active" href="/">Call desk</a>
+      <a href="/dashboard">Registry</a>
+      <a href="/docs">API</a>
+    </nav>
+  </header>
+  <main class="layout">
+    <section class="card phone">
+      <header>
+        <p class="kicker">Front desk</p>
+        <h1>Call without a phone line.</h1>
+        <p class="sub">This is the same registration the phone agent uses. Type, or use the mic in Chrome. Nothing here needs an API key.</p>
+      </header>
+      <div id="transcript" class="transcript"></div>
+      <form id="composer" class="composer">
+        <input id="text" autocomplete="off" placeholder="Tell the desk your name…" />
+        <button class="ghost" id="mic" type="button">Mic</button>
+        <button class="primary" type="submit">Send</button>
+      </form>
+    </section>
+    <aside class="card">
+      <header>
+        <p class="kicker">Collected</p>
+        <h1>On the card.</h1>
+      </header>
+      <div class="facts">
+        <dl id="facts"></dl>
+        <div class="phase" id="phase">starting</div>
+      </div>
+    </aside>
+  </main>
+  <script>
+    const transcript = document.querySelector("#transcript");
+    const facts = document.querySelector("#facts");
+    const phase = document.querySelector("#phase");
+    const text = document.querySelector("#text");
+    let sessionId = null;
+
+    const labels = ["first_name","last_name","date_of_birth","sex","phone_number","address_line_1","address_line_2","city","state","zip_code","email","insurance_provider","insurance_member_id","preferred_language","emergency_contact_name","emergency_contact_phone"];
+
+    function bubble(role, line) {
+      const el = document.createElement("div");
+      el.className = "bubble " + role;
+      el.textContent = line;
+      transcript.appendChild(el);
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    function speak(line) {
+      if (!window.speechSynthesis) return;
+      const utter = new SpeechSynthesisUtterance(line);
+      utter.rate = 1;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }
+
+    function render(data) {
+      phase.textContent = data.phase + (data.ended ? " · finished" : "");
+      facts.innerHTML = "";
+      labels.forEach((key) => {
+        if (!data.collected || !data.collected[key]) return;
+        const row = document.createElement("div");
+        row.innerHTML = "<dt>" + key.replaceAll("_", " ") + "</dt><dd>" + data.collected[key] + "</dd>";
+        facts.appendChild(row);
+      });
+    }
+
+    async function boot() {
+      const response = await fetch("/voice/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const body = await response.json();
+      sessionId = body.data.session_id;
+      bubble("agent", body.data.say);
+      render(body.data);
+      speak(body.data.say);
+    }
+
+    document.querySelector("#composer").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const line = text.value.trim();
+      if (!line || !sessionId) return;
+      text.value = "";
+      bubble("caller", line);
+      const response = await fetch("/voice/sessions/" + sessionId + "/turns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: line })
+      });
+      const body = await response.json();
+      if (!body.data) {
+        bubble("agent", body.error ? body.error.message : "Something went wrong.");
+        return;
+      }
+      bubble("agent", body.data.say);
+      render(body.data);
+      speak(body.data.say);
+    });
+
+    document.querySelector("#mic").addEventListener("click", () => {
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Rec) {
+        bubble("agent", "This browser has no speech recognition. Typing works the same.");
+        return;
+      }
+      const rec = new Rec();
+      rec.lang = "en-US";
+      rec.onresult = (event) => {
+        text.value = event.results[0][0].transcript;
+        document.querySelector("#composer").requestSubmit();
+      };
+      rec.start();
+    });
+
+    boot();
+  </script>
+</body>
+</html>

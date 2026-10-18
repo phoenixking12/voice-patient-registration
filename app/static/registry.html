@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harbor Intake — registry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=Outfit:wght@400;520&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="top">
+    <p class="mark">Harbor <span>Intake</span></p>
+    <nav class="nav">
+      <a href="/">Call desk</a>
+      <a class="active" href="/dashboard">Registry</a>
+      <a href="/docs">API</a>
+    </nav>
+  </header>
+  <main class="layout">
+    <section class="card ledger">
+      <header>
+        <p class="kicker">Live table</p>
+        <h1>Who is registered.</h1>
+      </header>
+      <p class="note">Soft-deleted rows stay in the database and disappear from this list. Search uses the same filters as <code>GET /patients</code>.</p>
+      <form id="search" class="toolbar">
+        <input name="last_name" placeholder="Last name" />
+        <input name="date_of_birth" placeholder="MM/DD/YYYY" />
+        <input name="phone_number" placeholder="Phone" />
+        <button class="primary" type="submit">Search</button>
+        <button class="ghost" id="reset" type="button">All</button>
+      </form>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Born</th><th>Phone</th><th>City</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+    <aside class="card">
+      <header>
+        <p class="kicker">Record</p>
+        <h1 id="title">Select a row.</h1>
+      </header>
+      <div class="sheet">
+        <pre id="detail">The phone desk and this page read the same patients.</pre>
+        <button class="danger" id="remove" type="button" hidden>Soft-delete</button>
+      </div>
+      <form id="create" class="form-grid">
+        <label>First name<input name="first_name" required /></label>
+        <label>Last name<input name="last_name" required /></label>
+        <label>Date of birth<input name="date_of_birth" placeholder="03/04/1990" required /></label>
+        <label>Sex
+          <select name="sex">
+            <option>Female</option>
+            <option>Male</option>
+            <option>Other</option>
+            <option>Decline to Answer</option>
+          </select>
+        </label>
+        <label>Phone<input name="phone_number" placeholder="512-555-2198" required /></label>
+        <label>State<input name="state" placeholder="TX" required /></label>
+        <label class="wide">Street<input name="address_line_1" required /></label>
+        <label>City<input name="city" required /></label>
+        <label>ZIP<input name="zip_code" required /></label>
+        <button class="primary wide" type="submit">Create patient</button>
+      </form>
+      <p class="note" id="message"></p>
+    </aside>
+  </main>
+  <script>
+    const rows = document.querySelector("#rows");
+    const detail = document.querySelector("#detail");
+    const title = document.querySelector("#title");
+    const remove = document.querySelector("#remove");
+    const message = document.querySelector("#message");
+    let selected = null;
+
+    function show(patient) {
+      selected = patient;
+      title.textContent = patient.first_name + " " + patient.last_name;
+      detail.textContent = JSON.stringify(patient, null, 2);
+      remove.hidden = false;
+    }
+
+    async function load(params) {
+      const query = new URLSearchParams();
+      Object.entries(params || {}).forEach(([key, value]) => { if (value) query.set(key, value); });
+      const response = await fetch("/patients?" + query.toString());
+      const body = await response.json();
+      rows.innerHTML = "";
+      (body.data.patients || []).forEach((patient) => {
+        const tr = document.createElement("tr");
+        tr.className = "clickable";
+        tr.innerHTML = "<td>" + patient.first_name + " " + patient.last_name + "</td><td>" + patient.date_of_birth + "</td><td>" + patient.phone_number + "</td><td>" + patient.city + ", " + patient.state + "</td>";
+        tr.addEventListener("click", () => show(patient));
+        rows.appendChild(tr);
+      });
+    }
+
+    document.querySelector("#search").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(event.target).entries());
+      load(data);
+    });
+    document.querySelector("#reset").addEventListener("click", () => {
+      document.querySelector("#search").reset();
+      load();
+    });
+    remove.addEventListener("click", async () => {
+      if (!selected) return;
+      await fetch("/patients/" + selected.patient_id, { method: "DELETE" });
+      selected = null;
+      title.textContent = "Select a row.";
+      detail.textContent = "Deleted records stay in the database with deleted_at set.";
+      remove.hidden = true;
+      load();
+    });
+    document.querySelector("#create").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = Object.fromEntries(new FormData(event.target).entries());
+      const response = await fetch("/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const body = await response.json();
+      if (body.error) {
+        message.textContent = body.error.message + " " + JSON.stringify(body.error.fields || {});
+        return;
+      }
+      message.textContent = "Saved " + body.data.patient_id;
+      event.target.reset();
+      load();
+      show(body.data);
+    });
+    load();
+  </script>
+</body>
+</html>
