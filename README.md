@@ -1,19 +1,28 @@
 # Harbor Intake
 
-A voice patient-registration desk. A caller gives their demographics in a normal conversation. The desk checks each field, reads the record back, and saves it. The same record is available from a REST API and a small registry page.
+A voice patient-registration desk for a hiring review. A caller dials a U.S. number, gives their demographics in conversation, hears the record read back, and the desk saves it only after they confirm. The same record is available from a REST API and a registry page.
 
-This is a demo for a hiring review. Use fictional people only. It is not a production clinic system and it does not try to be HIPAA compliant.
+Use fictional people only. This is not a production clinic system and it does not try to be HIPAA compliant.
 
-## For review
+## Review
 
-- Phone number to call: +1 (878) 277-9126
-- API base URL: https://bargraph-enigmatic-factor.ngrok-free.dev
-- Registry: https://bargraph-enigmatic-factor.ngrok-free.dev/dashboard
-- Repo: https://github.com/phoenixking12/voice-patient-registration
+| | |
+|---|---|
+| Phone number to call | +1 (878) 277-9126 |
+| API base URL | https://bargraph-enigmatic-factor.ngrok-free.dev |
+| Registry | https://bargraph-enigmatic-factor.ngrok-free.dev/dashboard |
+| API docs | https://bargraph-enigmatic-factor.ngrok-free.dev/docs |
+| Repository | https://github.com/phoenixking12/voice-patient-registration |
 
-No login is required. `GET /patients` lists who has registered. The phone agent saves through `POST /voice/vapi`.
+No login is required.
 
-The original assignment file is not in this repository. It was marked confidential for the candidate. This page describes the system that was built.
+1. Call **+1 (878) 277-9126**. The agent answers and asks for a name.
+2. Give the date of birth as month/day/year, for example `03/04/1990`. A U.S. number or a number with a country code, such as `+92 300 1234567`, is accepted.
+3. Confirm when the agent reads the record back. It says "You're all set" only after the save succeeds.
+4. Open `GET /patients`, or the registry link above. The person from the call is listed there.
+5. Call again and give the same phone number. The agent should offer to update that record instead of creating a second one.
+
+`GET /health` returns the service status. The phone agent writes through `POST /voice/vapi`. Two fictional patients are already loaded: Jane Adler (`5125552198`) and Carlos Reyes (`7375552184`).
 
 ## Try it with no accounts
 
@@ -42,13 +51,11 @@ Two fictional patients are inserted the first time the database is empty: Jane A
 python -m pytest
 ```
 
-Fourteen tests cover the API envelope, validation, soft-delete, a full spoken registration, a one-sentence registration, a spelled correction, a duplicate phone, Spanish, and the Vapi tool webhook.
+Eighteen tests cover the API envelope, validation, soft-delete, a full spoken registration, a one-sentence registration, the month/day/year date, an international phone number, a spelled correction, a duplicate phone, Spanish, and the Vapi tool webhook.
 
-## What I need from you
+## Environment
 
-Nothing, to review the desk, the API, and the tests.
-
-I do **not** need your passwords, and I should not receive API keys in chat or in git. If you want a live U.S. number later, put the keys in a local `.env` file (copy `.env.example`). That file is gitignored.
+Nothing is required to call the live number or read the API. A local `.env` file, copied from `.env.example`, is only for running the app on another machine. That file is gitignored. Do not commit API keys.
 
 | Secret | Required for the review? | Where it goes | What it unlocks |
 |---|---|---|---|
@@ -58,7 +65,7 @@ I do **not** need your passwords, and I should not receive API keys in chat or i
 | `PUBLIC_BASE_URL` | Only for a real phone call | `.env` and the Vapi assistant | The https address Vapi calls, for example your ngrok URL. |
 | `VAPI_API_KEY` | Only if you want the assistant created from code | Vapi dashboard, or `.env` if we script it | Buying a number and saving the assistant. The webhook itself does not check this key. |
 
-Do not commit `.env`. Do not paste a private key into GitHub, email, or this chat.
+Do not commit `.env`.
 
 ## Free accounts, in the order to open them
 
