@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.db import make_engine, make_session_factory
+from app.db import make_engine, make_session_factory, relax_phone_check
 from app.models import Base
 from app.services.patients import PatientError, create_patient, get_patient, list_patients, seed_demo, soft_delete, update_patient
 from app.services.schedule import list_appointments
@@ -28,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     engine = make_engine(settings.database_url)
     Base.metadata.create_all(engine)
+    relax_phone_check(engine)
     factory = make_session_factory(engine)
     if settings.seed:
         with factory() as db:
@@ -157,7 +158,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return error
         caller = payload.get("caller_phone")
         if caller and not normalize_phone(str(caller)):
-            return fail(422, "validation_error", "Caller phone must be a 10-digit U.S. number.", {"caller_phone": "Invalid."})
+            return fail(422, "validation_error", "That caller phone number is not valid.", {"caller_phone": "Invalid."})
         opened = start_session(db, settings, caller_phone=caller)
         return ok(opened, 201)
 

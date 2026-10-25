@@ -31,7 +31,7 @@ class Patient(Base):
             "sex IN ('Male', 'Female', 'Other', 'Decline to Answer')",
             name="ck_patients_sex",
         ),
-        CheckConstraint("length(phone_number) = 10", name="ck_patients_phone"),
+        CheckConstraint("length(phone_number) BETWEEN 8 AND 16", name="ck_patients_phone"),
         CheckConstraint("length(state) = 2", name="ck_patients_state"),
         Index("ix_patients_last_name", "last_name"),
         Index("ix_patients_dob", "date_of_birth"),
@@ -49,7 +49,7 @@ class Patient(Base):
     last_name: Mapped[str] = mapped_column(String(50), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
     sex: Mapped[str] = mapped_column(String(20), nullable=False)
-    phone_number: Mapped[str] = mapped_column(String(10), nullable=False)
+    phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
     email: Mapped[str | None] = mapped_column(String(254))
     address_line_1: Mapped[str] = mapped_column(String(120), nullable=False)
     address_line_2: Mapped[str | None] = mapped_column(String(120))
@@ -60,7 +60,7 @@ class Patient(Base):
     insurance_member_id: Mapped[str | None] = mapped_column(String(40))
     preferred_language: Mapped[str] = mapped_column(String(40), nullable=False, default="English")
     emergency_contact_name: Mapped[str | None] = mapped_column(String(80))
-    emergency_contact_phone: Mapped[str | None] = mapped_column(String(10))
+    emergency_contact_phone: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime)
@@ -70,7 +70,7 @@ class CallLog(Base):
     __tablename__ = "call_logs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
-    caller_phone: Mapped[str | None] = mapped_column(String(10))
+    caller_phone: Mapped[str | None] = mapped_column(String(20))
     patient_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("patients.patient_id"))
     transcript: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     final_payload: Mapped[str | None] = mapped_column(Text)

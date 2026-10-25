@@ -21,7 +21,14 @@ insurance card photo, or diagnosis.
 
 Required, in roughly this order, but accept anything the caller volunteers early:
 first name, last name, date of birth, sex (Male, Female, Other, or Decline to
-Answer), 10-digit U.S. phone, street address, city, state, ZIP.
+Answer), phone number, street address, city, state, ZIP.
+
+Phone numbers may be from any country. Ask for the country code when it is
+not a U.S. number. Examples: +92 300 1234567, or 512-555-2198.
+
+When you ask for the date of birth, say the format first and do not accept
+a guess: month/day/year, like 03/04/1990. March 4, 1990 is also fine.
+If they give a date you cannot place, ask again for month/day/year.
 
 After the required fields, offer once: "I can also take insurance, a member id,
 email, apartment, emergency contact, or preferred language. Want to add any?"
@@ -58,9 +65,9 @@ LINES = {
         "restart": "No problem, we'll start fresh. What's your first and last name?",
         "first_name": "What's your first name?",
         "last_name": "And your last name?",
-        "date_of_birth": "What's your date of birth?",
+        "date_of_birth": "What's your date of birth? Please use month/day/year, like 03/04/1990.",
         "sex": "How should I record your sex? You can say male, female, other, or decline to answer.",
-        "phone_number": "What's the best 10-digit phone number for you?",
+        "phone_number": "What's the best phone number for you? If it's outside the U.S., include the country code, like +92 300 1234567.",
         "address_line_1": "What's the street address?",
         "city": "What city is that in?",
         "state": "And the state?",
@@ -91,9 +98,9 @@ LINES = {
         "restart": "Claro, empezamos de nuevo. ¿Cuál es tu nombre y apellido?",
         "first_name": "¿Cuál es tu nombre?",
         "last_name": "¿Y tu apellido?",
-        "date_of_birth": "¿Cuál es tu fecha de nacimiento?",
+        "date_of_birth": "¿Cuál es tu fecha de nacimiento? Usa mes/día/año, por ejemplo 03/04/1990.",
         "sex": "¿Cómo registro el sexo? Puedes decir masculino, femenino, otro, o prefiero no decir.",
-        "phone_number": "¿Cuál es tu teléfono de 10 dígitos?",
+        "phone_number": "¿Cuál es tu teléfono? Si no es de Estados Unidos, incluye el código de país, como +92 300 1234567.",
         "address_line_1": "¿Cuál es la dirección?",
         "city": "¿En qué ciudad?",
         "state": "¿Y el estado?",

@@ -122,16 +122,30 @@ MONTHS = {
 }
 
 
+PHONE_HINT = "Use a country code, like +92 300 1234567, or a 10-digit U.S. number like 512-555-2198."
+DATE_HINT = "Please use month/day/year, like 03/04/1990. March 4, 1990 works too."
+
+
 def normalize_phone(value: str) -> str | None:
-    digits = re.sub(r"\D", "", value or "")
+    raw = value or ""
+    has_plus = "+" in raw
+    digits = re.sub(r"\D", "", raw)
+    if digits.startswith("00"):
+        digits = digits[2:]
+        has_plus = True
+    if not digits:
+        return None
+    # A leading 1 on 11 digits is the U.S. country code.
     if len(digits) == 11 and digits.startswith("1"):
-        digits = digits[1:]
-    if len(digits) != 10:
-        return None
-    # NANP: area code and exchange cannot start with 0 or 1.
-    if digits[0] in "01" or digits[3] in "01":
-        return None
-    return digits
+        national = digits[1:]
+        if national[0] not in "01" and national[3] not in "01":
+            return national
+    if len(digits) == 10 and digits[0] not in "01" and digits[3] not in "01" and not has_plus:
+        return digits
+    # Any other country: keep the country code. Stored with a leading +.
+    if 8 <= len(digits) <= 15 and digits[0] != "0":
+        return "+" + digits
+    return None
 
 
 def parse_dob(value: date | datetime | str) -> tuple[date | None, str | None]:
@@ -143,7 +157,7 @@ def parse_dob(value: date | datetime | str) -> tuple[date | None, str | None]:
         text = str(value).strip()
         found = _parse_dob_text(text)
         if found is None:
-            return None, "Use a real date like March 4, 1990 or 03/04/1990."
+            return None, DATE_HINT
     today = date.today()
     if found > today:
         return None, "That date is in the future. Tell me a date of birth that has already happened."
@@ -158,8 +172,21 @@ def _parse_dob_text(text: str) -> date | None:
         return _safe_date(int(iso.group(1)), int(iso.group(2)), int(iso.group(3)))
     numeric = re.fullmatch(r"(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})", text)
     if numeric:
-        month, day, year = int(numeric.group(1)), int(numeric.group(2)), int(numeric.group(3))
-        return _safe_date(expand_year(year), month, day)
+        first, second = int(numeric.group(1)), int(numeric.group(2))
+        year = expand_year(int(numeric.group(3)))
+        # 25/10/1990 cannot be month-first. The told format stays month/day/year when both are possible.
+        if first > 12 and 1 <= second <= 12:
+            return _safe_date(year, second, first)
+        return _safe_date(year, first, second)
+    day_first = re.fullmatch(
+        r"(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?([A-Za-z]+)\,?\s+(\d{4})",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if day_first:
+        month = MONTHS.get(day_first.group(2).lower())
+        if month:
+            return _safe_date(int(day_first.group(3)), month, int(day_first.group(1)))
     named = re.fullmatch(
         r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?\,?\s+(\d{4})",
         text,
@@ -210,7 +237,7 @@ def normalize_field(key: str, value):  # noqa: ANN001
     if key in ("phone_number", "emergency_contact_phone"):
         phone = normalize_phone(str(value))
         if not phone:
-            return None, "Use a 10-digit U.S. number, like 512-555-2198."
+            return None, PHONE_HINT
         return phone, None
     if key == "email":
         text = str(value).strip()

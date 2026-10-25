@@ -47,6 +47,22 @@ def test_one_sentence_then_confirm(client):
     assert turns[-1]["patient"]["zip_code"] == "78701"
 
 
+def test_chat_accepts_month_day_year(client):
+    turns = talk(client, ["Priya Shah", "03/04/1990"])
+    assert "month/day/year" in turns[1]["say"]
+    assert turns[-1]["collected"]["date_of_birth"] == "1990-03-04"
+
+
+def test_chat_accepts_a_day_that_cannot_be_a_month(client):
+    turns = talk(client, ["Priya Shah", "25/10/1990"])
+    assert turns[-1]["collected"]["date_of_birth"] == "1990-10-25"
+
+
+def test_chat_accepts_a_non_us_phone(client):
+    turns = talk(client, ["Priya Shah", "03/04/1990", "female", "+92 300 5550199"])
+    assert turns[-1]["collected"]["phone_number"] == "+923005550199"
+
+
 def test_future_birthday_is_rejected(client):
     turns = talk(client, ["Priya Shah", "January 1, 2099"])
     assert "date_of_birth" not in turns[-1]["collected"]

@@ -68,6 +68,14 @@ def test_validation_and_duplicate_phone(client):
     assert "phone_number" in duplicate.json()["error"]["fields"]
 
 
+def test_international_phone_is_stored(client):
+    created = client.post("/patients", json={**PRIYA, "phone_number": "+92 300 5550198"})
+    assert created.status_code == 201, created.text
+    assert created.json()["data"]["phone_number"] == "+923005550198"
+    listed = client.get("/patients", params={"phone_number": "+92 300 5550198"})
+    assert len(listed.json()["data"]["patients"]) == 1
+
+
 def test_seed_records_exist(seeded_client):
     rows = seeded_client.get("/patients").json()["data"]["patients"]
     last_names = {row["last_name"] for row in rows}

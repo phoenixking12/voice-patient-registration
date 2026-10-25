@@ -98,8 +98,8 @@ def list_patients(
         phone = normalize_phone(phone_number)
         if not phone:
             raise PatientError(
-                "Use a 10-digit U.S. number.",
-                fields={"phone_number": "Use a 10-digit U.S. number."},
+                "That phone number is not valid.",
+                fields={"phone_number": "Use a country code, like +92 300 1234567, or a 10-digit U.S. number."},
             )
         query = query.filter(Patient.phone_number == phone)
     rows = query.order_by(Patient.created_at.asc()).limit(200).all()

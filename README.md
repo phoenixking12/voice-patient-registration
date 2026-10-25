@@ -4,6 +4,15 @@ A voice patient-registration desk. A caller gives their demographics in a normal
 
 This is a demo for a hiring review. Use fictional people only. It is not a production clinic system and it does not try to be HIPAA compliant.
 
+## For review
+
+- Phone number to call: +1 (878) 277-9126
+- API base URL: https://bargraph-enigmatic-factor.ngrok-free.dev
+- Registry: https://bargraph-enigmatic-factor.ngrok-free.dev/dashboard
+- Repo: https://github.com/phoenixking12/voice-patient-registration
+
+No login is required. `GET /patients` lists who has registered. The phone agent saves through `POST /voice/vapi`.
+
 The original assignment file is not in this repository. It was marked confidential for the candidate. This page describes the system that was built.
 
 ## Try it with no accounts
@@ -166,7 +175,7 @@ Invalid data is asked again for that field only. A future birthday, a 3-digit ph
 | `first_name`, `last_name` | 1–50 letters, spaces, hyphens, apostrophes. Required. |
 | `date_of_birth` | Real date, not in the future, year 1900 or later. API returns `MM/DD/YYYY`. |
 | `sex` | Male, Female, Other, Decline to Answer |
-| `phone_number` | 10-digit NANP, stored as digits. Area code and exchange cannot start with 0 or 1. |
+| `phone_number` | A 10-digit U.S. number, stored as digits, or any other country stored as `+` and the country code. |
 | `email` | Optional |
 | `address_line_1` | Required. `address_line_2` optional. |
 | `city` | Required, up to 100 characters |
@@ -174,7 +183,7 @@ Invalid data is asked again for that field only. A future birthday, a 3-digit ph
 | `zip_code` | 5 digits or ZIP+4 |
 | `insurance_provider`, `insurance_member_id` | Optional |
 | `preferred_language` | Defaults to English |
-| `emergency_contact_name`, `emergency_contact_phone` | Optional. Phone uses the same 10-digit rule. |
+| `emergency_contact_name`, `emergency_contact_phone` | Optional. The phone uses the same country-code rule. |
 | `created_at`, `updated_at` | UTC |
 | `deleted_at` | Set by `DELETE`. The row stays. |
 

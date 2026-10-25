@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 
 from app.validation import (
     MONTHS,
+    PHONE_HINT,
     STATE_ABBRS,
     STATE_NAMES,
     canonical_sex,
@@ -244,6 +245,13 @@ def _take_email(raw: str, result: Parse) -> None:
 
 
 def _take_phones(raw: str, pending: str | None, result: Parse) -> list[tuple[int, int]]:
+    international = re.search(r"\+\s*\d[\d\s().-]{6,20}\d", raw)
+    if international:
+        phone = normalize_phone(international.group(0))
+        if phone:
+            key = "emergency_contact_phone" if pending == "emergency_contact_phone" else "phone_number"
+            result.fields[key] = phone
+            return [(international.start(), international.end())]
     matches = list(PHONE_RE.finditer(raw))
     spans = [(match.start(), match.end()) for match in matches]
     numbers = ["".join(match.groups()) for match in matches]
@@ -258,7 +266,7 @@ def _take_phones(raw: str, pending: str | None, result: Parse) -> list[tuple[int
             key = "emergency_contact_phone" if pending == "emergency_contact_phone" else "phone_number"
             probe = normalize_phone(raw)
             if probe is None:
-                result.invalid[key] = "I need all 10 digits of a U.S. number, like 512-555-2198."
+                result.invalid[key] = PHONE_HINT
     return spans
 
 
